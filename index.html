@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Login/Sign Up</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="styles/login.css">
+  <link href="https://fonts.googleapis.com/css?family=Nunito:400,600,700,800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="cont">
+    <form onsubmit="register(this);return false" class="form sign-in" id="login-form">
+      <h2>Log In to Continue</h2>
+      <label>
+        <span>Username</span>
+        <input type="text" name="user" required><br>
+      </label>
+      <label>
+        <span>Password</span>
+        <input type="password" name="password" required><br>
+        <span class="error" id="login-err"></span>
+      </label>
+      <button class="submit" type="submit" name="submit" value="login">Log In</button>
+      <p class="forgot-pass">Forgot Password ?</p>
+
+      <div class="social-media">
+        <ul>
+          <li><img src="img/facebook.png"></li>
+          <li><img src="img/twitter.png"></li>
+          <li><img src="img/linkedin.png"></li>
+          <li><img src="img/instagram.png"></li>
+        </ul>
+      </div>
+    </form>
+
+    <div class="sub-cont">
+      <div class="img">
+        <div class="img-text m-up">
+          <h2>New to our Site?</h2>
+          <p>Sign Up and become part of us!</p>
+        </div>
+        <div class="img-text m-in">
+          <h2>One of us?</h2>
+          <p>If you already has an account, Log In. We've missed you!</p>
+        </div>
+        <div class="img-btn">
+          <span class="m-up">Sign Up</span>
+          <span class="m-in">Log In</span>
+        </div>
+      </div>
+      <form class="form sign-up" onsubmit="register(this);return false" id="signup-form" autocomplete="off">
+        <h2>Sign Up</h2>
+        <label>
+          <span>Username</span>
+          <input type="text" name="user" required pattern="[a-zA-Z0-9_]{5,25}" id="username" autofocus autocomplete="off">
+          <span style="font-size: 9px">Min. 5 and Max. 25 characters (0-9, a-z, A-Z, _)</span>
+          <span class="error" id="name-msg"></span>
+        </label>
+        <label>
+          <span>Password</span>
+          <input type="password" id="password" name="password" 
+          required onchange="match()" pattern=".{8,}" autocomplete="new-password">
+        </label>
+        <label>
+          <span>Confirm Password</span>
+          <input type="password" id="confirm" name="confirm" required oninput="match()">
+        </label>
+        <label>
+          <p id="signup-err"></p>
+        </label>
+        <button type="submit" id="regButton" class="submit" name="submit" value="signup">Sign Up Now</button>
+      </form>
+    </div>
+  </div>
+<script type="text/javascript" src="scripts/script.js"></script>
+<script>
+    var regButton = document.getElementById('regButton')
+    var pass = document.getElementById('password')
+    var cpass = document.getElementById('confirm')
+    // If passwords don't match then disable submit button until they match
+    function match() {
+      if (pass.value == '') {
+        cpass.style = ""
+      } else if (pass.value != cpass.value) {
+            regButton.setAttribute('disabled', 'true')
+            cpass.style = "background-color: red;"
+        } else {
+            regButton.removeAttribute('disabled')
+            cpass.style = "background-color: green;"
+        }
+    }
+</script>
+
+<script>
+  function register(form) {
+      var data = new FormData(form)
+      // Create a query string to send using POST
+      var query = ""
+      for (var record of data.entries()) {
+          query += `${record[0]}=${record[1]}&`
+      }
+      var query = query + `form=${form.id}`
+
+      // AJAX
+      var xhttp = new XMLHttpRequest()
+      xhttp.onreadystatechange = function() {
+          if (this.readyState == 4 && this.status == 200) {
+            var response = this.responseText.trim()
+            // Redirect to homepage on successful authentication
+            if (response == 'success') {
+              alert('successful')
+              location.href = 'index.html'
+            } else {
+              // Display error message
+              if (form.id == 'login-form') {
+                document.getElementById('login-err').innerHTML = response
+              } else {
+                document.getElementById('signup-err').innerHTML = response
+              }
+            }
+            form.reset()
+          }
+      }
+      xhttp.open('POST', 'scripts/auth.php', true)
+      xhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded')
+      xhttp.send(query)
+  }
+</script>
+
+<script>
+  function checkuser(username) {
+    var nameField = document.getElementById('name-msg')
+    if (username == '') {
+      nameField.innerHTML = ""
+      return
+    } else if(!/^[a-z0-9_]{5,25}$/i.test(username)) {
+        nameField.innerHTML = "Invalid username"
+        return
+    } 
+
+    var xhttp2 = new XMLHttpRequest()
+    xhttp2.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+        var response = JSON.parse(this.responseText)
+        nameField.innerHTML = response.message
+        if (response.userexists) {
+          nameField.style = "color: red"
+        } else {
+          nameField.style = "color: green"
+        }
+      }
+    }
+    xhttp2.open('GET', 'scripts/username.php?user=' + username, true)
+    xhttp2.send()
+  }
+
+  // To execute checkuser function only after user has paused typing in the input field for a while
+  var delay = (function() {
+    var timer = 0
+    return function(callback, t) {
+      clearTimeout(timer)
+      timer = setTimeout(callback, t)
+    };
+  })();
+
+  var userInput = document.getElementById('username')
+  userInput.addEventListener(
+    'input', () => delay(
+      () => checkuser(userInput.value),
+    2000)
+  )
+</script>
+</body>
+</html>
